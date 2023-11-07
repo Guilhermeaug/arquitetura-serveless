@@ -99,7 +99,6 @@ export default function Home() {
         <Grid columns={'3'} gap={'3'} width={'auto'} mt={"4"}>
           {images.map((image, index) => {
             const [style, seed] = image.split(':');
-            console.log(style, seed);
             return (
               <Image
                 key={index}
