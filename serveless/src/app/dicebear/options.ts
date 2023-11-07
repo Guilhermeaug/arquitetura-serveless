@@ -5,7 +5,7 @@ export const styles = [
   'avataaars',
   'avataaars-neutral',
   'big-ears',
-  'bigEars-neutral',
+  'big-ears-neutral',
   'bottts',
   'bottts-neutral',
   'thumbs',

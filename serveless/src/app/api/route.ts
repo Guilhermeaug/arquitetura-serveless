@@ -16,3 +16,10 @@ export async function GET(request: Request) {
   const images = await kv.lrange('dicebear', 0, -1);
   return Response.json(images);
 }
+
+export async function DELETE(request: Request) {
+  await kv.del('dicebear');
+  return Response.json({
+    message: 'success',
+  });
+}

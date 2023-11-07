@@ -17,6 +17,20 @@ type Response = {
   image: string;
 };
 
+const keyStr =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+const triplet = (e1: number, e2: number, e3: number) =>
+  keyStr.charAt(e1 >> 2) +
+  keyStr.charAt(((e1 & 3) << 4) | (e2 >> 4)) +
+  keyStr.charAt(((e2 & 15) << 2) | (e3 >> 6)) +
+  keyStr.charAt(e3 & 63);
+
+const rgbDataURL = (r: number, g: number, b: number) =>
+  `data:image/gif;base64,R0lGODlhAQABAPAA${
+    triplet(0, r, g) + triplet(b, 255, 255)
+  }/yH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==`;
+
 export default function Home() {
   const [style, setStyle] = useState('adventurer');
   const [seed, setSeed] = useState('');
@@ -33,12 +47,24 @@ export default function Home() {
     fetchImages();
   }, []);
 
-  async function generateAvatar() {
+  async function generateAvatar(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
     const endpoint = `${process.env.NEXT_PUBLIC_API_URL}?seed=${seed}&style=${style}`;
     const image = (await fetch(endpoint, {
       method: 'POST',
     }).then((res) => res.json())) as Response;
     setImages([...images, image.image]);
+
+    setSeed('');
+  }
+
+  async function clearImages() {
+    const endpoint = process.env.NEXT_PUBLIC_API_URL;
+    await fetch(endpoint!, {
+      method: 'DELETE',
+    });
+    setImages([]);
   }
 
   return (
@@ -57,46 +83,61 @@ export default function Home() {
           </a>
         </Text>
 
-        <Flex
-          direction={'row'}
-          gap={'9'}
-          style={{
-            marginTop: '2rem',
-          }}
-        >
-          <Flex direction={'column'} gap={'2'}>
-            <Text size={'3'}>Selecione o tipo do avatar</Text>
-            <Select.Root
-              value={style}
-              onValueChange={(value) => setStyle(value)}
-            >
-              <Select.Trigger variant="soft" />
-              <Select.Content variant={'solid'}>
-                <Select.Group>
-                  <Select.Label>Estilos</Select.Label>
-                  {styles.map((style) => (
-                    <Select.Item key={style} value={style}>
-                      {style}
-                    </Select.Item>
-                  ))}
-                </Select.Group>
-              </Select.Content>
-            </Select.Root>
+        <form onSubmit={generateAvatar}>
+          <Flex
+            direction={'row'}
+            gap={'6'}
+            style={{
+              marginTop: '2rem',
+            }}
+            align={'center'}
+          >
+            <Flex direction={'column'} gap={'2'}>
+              <Text size={'3'}>Selecione o tipo do avatar</Text>
+              <Select.Root
+                value={style}
+                onValueChange={(value) => setStyle(value)}
+              >
+                <Select.Trigger variant="soft" />
+                <Select.Content variant={'solid'}>
+                  <Select.Group>
+                    <Select.Label>Estilos</Select.Label>
+                    {styles.map((style) => (
+                      <Select.Item key={style} value={style}>
+                        {style}
+                      </Select.Item>
+                    ))}
+                  </Select.Group>
+                </Select.Content>
+              </Select.Root>
+            </Flex>
+            <Flex direction={'column'} gap={'2'}>
+              <Text size={'3'}>
+                Escolha um texto de semente para gerar um avatar aleatório
+              </Text>
+              <TextFieldInput
+                placeholder="Ex. avatar1"
+                value={seed}
+                onChange={(e) => setSeed(e.target.value)}
+              />
+            </Flex>
+            <Button>Gerar Avatar</Button>
+            <Button color="red" type='button' onClick={clearImages}>Limpar avatares</Button>
           </Flex>
-          <Flex direction={'column'} gap={'2'}>
-            <Text size={'3'}>
-              Escolha um texto de semente para gerar um avatar aleatório
-            </Text>
-            <TextFieldInput
-              placeholder="Ex. avatar1"
-              value={seed}
-              onChange={(e) => setSeed(e.target.value)}
-            />
-          </Flex>
-        </Flex>
-        <Button onClick={generateAvatar}>Gerar Avatar</Button>
+        </form>
 
-        <Grid columns={'3'} gap={'3'} width={'auto'} mt={"4"}>
+        <Grid
+          columns={{
+            initial: '2',
+            md: '4',
+            lg: '5',
+          }}
+          gap={'4'}
+          mt={'4'}
+          justify={'center'}
+          align={'center'}
+          position={'relative'}
+        >
           {images.map((image, index) => {
             const [style, seed] = image.split(':');
             return (
@@ -106,6 +147,8 @@ export default function Home() {
                 alt="avatar"
                 width={128}
                 height={128}
+                placeholder="blur"
+                blurDataURL={rgbDataURL(237, 181, 6)}
               />
             );
           })}
